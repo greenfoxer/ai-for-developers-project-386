@@ -1,0 +1,18 @@
+# Build output
+bin/
+obj/
+artifacts/
+
+# IDE / editors
+.vs/
+.vscode/
+.idea/
+*.user
+
+# Local settings and secrets
+appsettings.*.local.json
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
