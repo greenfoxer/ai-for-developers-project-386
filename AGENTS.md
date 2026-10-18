@@ -54,3 +54,17 @@ dotnet test CallCalendar.sln -c Release
 - Правило распространяется и на коммиты, которые делает агент.
 - `commitlint` в CI нет — это договорённость между пользователем и агентом.
 - На версию и changelog влияют только `feat`/`fix`; остальные типы release-please скрывает.
+
+## Agent skills
+
+### Issue tracker
+
+Задачи и спеки живут в GitHub Issues репозитория, все операции — через `gh` CLI. Подробности: `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Пять канонических ролей триажа с одноимёнными лейблами (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). Подробности: `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` и `docs/adr/` в корне репозитория (создаются лениво через `/domain-modeling`). Подробности: `docs/agents/domain.md`.
