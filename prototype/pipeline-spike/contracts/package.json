@@ -1,0 +1,12 @@
+{
+  "name": "callcalendar-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PROTOTYPE THROWAWAY (wayfinder ticket #16): минимальный псевдо-контракт для проверки проходимости цепочки TypeSpec -> OpenAPI -> Kiota -> NSwag. Не продакшен.",
+  "dependencies": {
+    "@typespec/compiler": "1.17.0",
+    "@typespec/http": "1.17.0",
+    "@typespec/openapi3": "1.17.0"
+  }
+}

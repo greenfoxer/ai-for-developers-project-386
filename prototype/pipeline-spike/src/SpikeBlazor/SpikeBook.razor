@@ -1,0 +1,27 @@
+@inject CallCalendarClient Client
+
+<p>THROWAWAY (ticket #16): компонент вызывает API через сгенерированный Kiota-SDK.</p>
+
+@if (events is not null)
+{
+    <ul>
+        @foreach (var e in events)
+        {
+            <li>@e.Name — @e.DurationMinutes мин, kind=@e.Kind</li>
+        }
+    </ul>
+}
+else
+{
+    <p>нет данных (API не запущен?)</p>
+}
+
+@code {
+    private IReadOnlyList<EventType>? events;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Реальный вызов через SDK: навигация по request-builder'ам.
+        events = await Client.Spike.EventTypes.GetAsync();
+    }
+}

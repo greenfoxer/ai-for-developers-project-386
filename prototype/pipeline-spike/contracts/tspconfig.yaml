@@ -1,0 +1,9 @@
+emit:
+  - "@typespec/openapi3"
+options:
+  "@typespec/openapi3":
+    emitter-output-dir: "{output-dir}/openapi"
+    output-file: openapi.yaml
+    # 3.0.0 — де-фолт эмиттера и общий знаменатель пайплайна: его едят и Kiota, и NSwag (R2/R3).
+    openapi-versions:
+      - 3.0.0

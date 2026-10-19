@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- THROWAWAY PROTOTYPE (ticket #16): прогон живого вызова клиента к API (wire-проверка). -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../SpikeClient/SpikeClient.csproj" />
+  </ItemGroup>
+
+</Project>

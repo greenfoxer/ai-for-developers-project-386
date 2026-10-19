@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- THROWAWAY PROTOTYPE (ticket #16): net10 API с NSwag-заготовками контроллеров. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <!-- NSwag DTO-атрибуты по умолчанию Newtonsoft (R3). -->
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <!-- Wire-формат enum/date требует Newtonsoft-форматтеров в MVC. -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

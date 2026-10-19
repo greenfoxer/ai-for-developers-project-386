@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <!-- THROWAWAY PROTOTYPE (ticket #16): Blazor-компонент, реально зовущий API через Kiota-SDK. -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../SpikeClient/SpikeClient.csproj" />
+  </ItemGroup>
+
+</Project>

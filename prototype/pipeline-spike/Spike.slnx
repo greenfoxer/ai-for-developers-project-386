@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SpikeApi/SpikeApi.csproj" />
+    <Project Path="src/SpikeBlazor/SpikeBlazor.csproj" />
+    <Project Path="src/SpikeClient/SpikeClient.csproj" />
+    <Project Path="src/SpikeRunner/SpikeRunner.csproj" />
+  </Folder>
+</Solution>

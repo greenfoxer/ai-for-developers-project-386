@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- THROWAWAY PROTOTYPE (ticket #16): net10 classlib с Kiota-клиентом из contracts/. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+  </ItemGroup>
+
+</Project>
