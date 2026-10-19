@@ -1,5 +1,17 @@
+:root {
+    --accent: #e97317;
+    --accent-dark: #d45f0d;
+    --ink: #111827;
+    --muted: #6b7280;
+    --surface: #ffffff;
+    --line: #e5e7eb;
+    --page-bg: #f7f8fa;
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: var(--page-bg);
+    color: var(--ink);
 }
 
 a, .btn-link {
