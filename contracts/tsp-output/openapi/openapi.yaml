@@ -1,0 +1,280 @@
+openapi: 3.0.0
+info:
+  title: CallCalendar API
+  version: 1.0.0
+  description: API сервиса бронирования календаря. Время — wall-clock Europe/Moscow (MSK) в ISO 8601 без offset (T8 Q2).
+tags:
+  - name: EventTypes
+  - name: Bookings
+paths:
+  /api/bookings:
+    post:
+      operationId: Bookings_create
+      description: Создать запись (T6/T8). Старт вне сетки/окна или некорректные поля — 400; нет такого типа — 404; слот занят (пересечение T2) — 409.
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - Bookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewBooking'
+    get:
+      operationId: Bookings_upcoming
+      description: 'Предстоящие встречи всех типов одним списком: старт строго после now (MSK), по возрастанию старта, без пагинации (T7).'
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+      tags:
+        - Bookings
+  /api/event-types:
+    get:
+      operationId: EventTypes_list
+      description: Список всех типов событий (одна операция для гостя и админа, T7/T8).
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventType'
+      tags:
+        - EventTypes
+    post:
+      operationId: EventTypes_create
+      description: Создать тип события (T5/T7). name уникален без учёта регистра/пробелов — дубль 409 (T5/T8).
+      parameters: []
+      responses:
+        '201':
+          description: The request has succeeded and a new resource has been created as a result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventType'
+        '400':
+          description: The server could not understand the request due to invalid syntax.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '409':
+          description: The request conflicts with the current state of the server.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - EventTypes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewEventType'
+  /api/event-types/{id}/availability:
+    get:
+      operationId: EventTypes_availability
+      description: 'Свободные старты слотов типа на дату — список wall-clock datetime «2026-10-21T09:00» (T8). Сервер считает один раз: шаг сетки = durationMinutes, якорь 09:00, старты с start+D<=18:00 (T4); окно 14 календарных дней включая сегодня, сегодняшние старты строго после now по MSK (T3); свободен = нет пересечения полуоткрытых интервалов с записями (T2). Нет такого типа — 404.'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          explode: false
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/wallClockDateTime'
+        '404':
+          description: The server cannot find the requested resource.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+      tags:
+        - EventTypes
+components:
+  schemas:
+    Booking:
+      type: object
+      required:
+        - id
+        - eventTypeId
+        - eventTypeName
+        - start
+        - end
+        - name
+        - email
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Идентификатор записи (целое, автонумерация).
+        eventTypeId:
+          type: integer
+          format: int32
+          description: Идентификатор типа события.
+        eventTypeName:
+          type: string
+          description: Название типа события — для отображения в списке встреч (T7).
+        start:
+          allOf:
+            - $ref: '#/components/schemas/wallClockDateTime'
+          description: Старт, wall-clock MSK (T8 Q2).
+        end:
+          allOf:
+            - $ref: '#/components/schemas/wallClockDateTime'
+          description: 'Конец — производный: start + durationMinutes типа (T6); типы неизменяемы (T7).'
+        name:
+          type: string
+          minLength: 1
+          description: Имя гостя; обязательно (T6).
+        email:
+          type: string
+          minLength: 1
+          format: email
+          description: Email гостя; обязателен, не уникален (T6).
+        additionalInfo:
+          type: string
+          description: Дополнительная информация гостя о будущем звонке; опционально (T6).
+    EventType:
+      type: object
+      required:
+        - id
+        - name
+        - durationMinutes
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: Идентификатор типа события (T5).
+        name:
+          type: string
+          minLength: 1
+          description: Название; обязательно, уникально без учёта регистра и обрамляющих пробелов (T5).
+        description:
+          type: string
+          description: Описание; опционально (T5).
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Длительность в минутах, > 0; определяет шаг сетки слотов (T4/T5).
+    NewBooking:
+      type: object
+      required:
+        - eventTypeId
+        - start
+        - name
+        - email
+      properties:
+        eventTypeId:
+          type: integer
+          format: int32
+          description: Идентификатор типа события; неизвестный → 404 (T8).
+        start:
+          allOf:
+            - $ref: '#/components/schemas/wallClockDateTime'
+          description: Старт, wall-clock MSK; в сетке слотов типа (T4) и после now (T3) — иначе 400 (T8).
+        name:
+          type: string
+          minLength: 1
+          description: Имя гостя; обязательно (T6).
+        email:
+          type: string
+          minLength: 1
+          format: email
+          description: Email гостя; обязателен, формат email (T6/T8).
+        additionalInfo:
+          type: string
+          description: Дополнительная информация; опционально (T6).
+    NewEventType:
+      type: object
+      required:
+        - name
+        - durationMinutes
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Название; обязательно, непустое (T5).
+        description:
+          type: string
+          description: Описание; опционально (T5).
+        durationMinutes:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Длительность в минутах, > 0 (T5).
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          description: URI-идентификатор типа проблемы.
+        title:
+          type: string
+          description: Краткое, человекочитаемое описание типа проблемы.
+        status:
+          type: integer
+          format: int32
+          description: HTTP-код статуса проблемы.
+        detail:
+          type: string
+          description: Детали конкретной проблемы (например, какой слот занят).
+    wallClockDateTime:
+      type: string
+      pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$
+servers:
+  - url: http://localhost:5000
+    description: Разработка (dev)
+    variables: {}
