@@ -1,0 +1,24 @@
+.page {
+    padding: 3rem 0 6rem;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 2rem;
+}
+
+.stub-card {
+    background: var(--surface);
+    border: 1px dashed #cfd6df;
+    border-radius: 16px;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+    .stub-card p {
+        color: var(--muted);
+        font-size: 1.05rem;
+        margin: 0;
+    }

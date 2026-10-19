@@ -1,0 +1,104 @@
+.hero {
+    background: linear-gradient(100deg, #d9e3f7 0%, #ece7ec 45%, #f8e9dc 100%);
+    padding: 4.5rem 0 6rem;
+}
+
+.hero-inner {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+}
+
+.badge-pill {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #374151;
+}
+
+h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin: 1.25rem 0 1rem;
+}
+
+.lead-text {
+    font-size: 1.2rem;
+    color: #4a5568;
+    max-width: 34rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.75rem;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 0.8rem 1.7rem;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+    .cta:hover {
+        background: var(--accent-dark);
+        color: #fff;
+        text-decoration: none;
+    }
+
+.cta-arrow {
+    font-weight: 400;
+}
+
+.feature-card {
+    background: var(--surface);
+    border: 1px solid #eceef1;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
+    padding: 2rem 2.25rem;
+}
+
+    .feature-card h2 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: var(--ink);
+        margin: 0 0 1.25rem;
+    }
+
+    .feature-card ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .feature-card li {
+        position: relative;
+        padding-left: 1.1rem;
+        margin: 0.8rem 0;
+        color: #4a5568;
+        font-size: 0.98rem;
+    }
+
+        .feature-card li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--muted);
+        }
+
+@media (max-width: 900px) {
+    .hero-inner {
+        grid-template-columns: 1fr;
+    }
+}
