@@ -34,7 +34,7 @@
     gap: 0.25rem;
 }
 
-.nav-link {
+.nav-links ::deep .nav-link {
     color: var(--muted);
     text-decoration: none;
     padding: 0.45rem 0.9rem;
@@ -42,12 +42,12 @@
     font-size: 0.95rem;
 }
 
-    .nav-link:hover {
+    .nav-links ::deep .nav-link:hover {
         color: var(--ink);
         background: #f3f4f6;
     }
 
-    .nav-link.active {
+    .nav-links ::deep .nav-link.active {
         color: var(--ink);
         background: #eef1f6;
     }
