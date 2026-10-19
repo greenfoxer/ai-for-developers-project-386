@@ -23,3 +23,8 @@ temp/
 # Node/TypeSpec-тулchain контрактов (P2: #17) — не коммитим
 node_modules/
 *.kiota.log
+
+# Локальная демо-БД SQLite (E4)
+*.db
+*.db-shm
+*.db-wal

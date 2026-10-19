@@ -5,4 +5,8 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../CallCalendar.Client/CallCalendar.Client.csproj" />
+  </ItemGroup>
+
 </Project>

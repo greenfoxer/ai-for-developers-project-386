@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- API сервиса: реализует TypeSpec-контракт, серверные артефакты в Generated/ (NSwag). -->
+  <PropertyGroup>
+    <UserSecretsId>callcalendar-api</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+    <!-- SQLitePCLRaw 2.1.11 (транзитивно из EF) помечен GHSA-2m69-gcr7-jv3q; берём 2.1.14. -->
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.14" />
+  </ItemGroup>
+
+</Project>

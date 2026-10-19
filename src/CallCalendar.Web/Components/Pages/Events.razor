@@ -1,12 +1,56 @@
 @page "/admin"
+@inject CallCalendarClient Api
 
 <PageTitle>Предстоящие события</PageTitle>
 
 <div class="page">
     <div class="container">
         <h1>Предстоящие события</h1>
-        <div class="stub-card">
-            <p>Раздел в разработке: скоро здесь появится список предстоящих событий.</p>
-        </div>
+        @if (loadError is not null)
+        {
+            <div class="stub-card">
+                <p>@loadError</p>
+            </div>
+        }
+        else if (bookings is null)
+        {
+            <div class="stub-card">
+                <p>Загрузка…</p>
+            </div>
+        }
+        else if (bookings.Count == 0)
+        {
+            <div class="stub-card">
+                <p>Записей пока нет.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="events-list">
+                @foreach (var booking in bookings)
+                {
+                    <li>@booking.Start — @booking.End · @booking.EventTypeName · @booking.Name (@booking.Email)</li>
+                }
+            </ul>
+        }
     </div>
 </div>
+
+@code {
+    private List<CallCalendar.Client.Models.Booking>? bookings;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Реальный вызов через клиентский SDK из контракта: GET /api/bookings (T7/T8).
+            bookings = await Api.Api.Bookings.GetAsync();
+        }
+        catch (Exception)
+        {
+            // CallCalendar.Api может быть не запущен (тесты, дев-стан) — страница деградирует в заглушку.
+            loadError = "Сервис бронирования временно недоступен.";
+        }
+    }
+}
