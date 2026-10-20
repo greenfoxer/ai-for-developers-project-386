@@ -1,12 +1,386 @@
 @page "/book"
+@rendermode InteractiveServer
+@inject CallCalendarClient Api
+@using ClientBooking = CallCalendar.Client.Models.Booking
 
 <PageTitle>Запись на звонок</PageTitle>
 
 <div class="page">
     <div class="container">
         <h1>Запись на звонок</h1>
-        <div class="stub-card">
-            <p>Раздел в разработке: скоро здесь можно будет выбрать слот и записаться на звонок.</p>
-        </div>
+
+        @if (apiUnavailable is not null)
+        {
+            <div class="stub-card">
+                <p>@apiUnavailable</p>
+            </div>
+        }
+        else if (types is null)
+        {
+            <div class="stub-card">
+                <p>Загрузка…</p>
+            </div>
+        }
+        else
+        {
+            <div class="crumbs">
+                @if (step != BookingStep.Type && step != BookingStep.Done)
+                {
+                    <button class="crumb-back" @onclick="GoBack">← назад</button>
+                }
+                <span class="crumb-label">@StepCaption(step)</span>
+            </div>
+
+            @if (globalNotice is not null)
+            {
+                <div class="notice">
+                    <p>@globalNotice</p>
+                </div>
+            }
+
+            @switch (step)
+            {
+                case BookingStep.Type:
+                    <div class="choice-grid">
+                        @foreach (var t in types)
+                        {
+                            <button class="choice" @onclick="() => ChooseType(t)">
+                                <span class="choice-title">@t.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(t.Description))
+                                {
+                                    <span class="choice-note">@t.Description</span>
+                                }
+                                <span class="choice-note">@t.DurationMinutes мин</span>
+                            </button>
+                        }
+                    </div>
+                    break;
+
+                case BookingStep.Date:
+                    <div class="choice-grid dates">
+                        @foreach (var day in days!)
+                        {
+                            <button class="choice day @(day.Equals(selectedDay) ? "selected" : "")"
+                                    @onclick="() => ChooseDateAsync(day)">
+                                <span class="choice-title">@day.ToString("dd.MM")</span>
+                                <span class="choice-note">@WeekdayShort(day)</span>
+                            </button>
+                        }
+                    </div>
+                    break;
+
+                case BookingStep.Slot:
+                    @if (slotsLoading)
+                    {
+                        <div class="stub-card"><p>Ищем свободные слоты…</p></div>
+                    }
+                    else if (conflictNotice is not null)
+                    {
+                        <div class="notice">
+                            <p>@conflictNotice</p>
+                        </div>
+                    }
+                    @if (slots is { Count: 0 })
+                    {
+                        <div class="stub-card">
+                            <p>На @selectedDayText свободных слотов нет — выберите другой день.</p>
+                        </div>
+                    }
+                    else if (slots is not null)
+                    {
+                        <div class="choice-grid slots">
+                            @foreach (var slot in slots)
+                            {
+                                <button class="choice slot" @onclick="() => ChooseSlot(slot)">
+                                    <span class="choice-title">@TimePart(slot)</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                    break;
+
+                case BookingStep.Guest:
+                    <div class="guest-form">
+                        <p class="selected-summary">@selectedType!.Name · @selectedDayText, @selectedSlotText</p>
+                        @if (formError is not null)
+                        {
+                            <div class="notice"><p>@formError</p></div>
+                        }
+                        <label class="field">
+                            <span>Имя *</span>
+                            <input @bind="guestName" placeholder="Как к вам обращаться" />
+                            @if (nameError is not null)
+                            {
+                                <span class="field-error">@nameError</span>
+                            }
+                        </label>
+                        <label class="field">
+                            <span>Email *</span>
+                            <input @bind="guestEmail" placeholder="you@example.com" />
+                            @if (emailError is not null)
+                            {
+                                <span class="field-error">@emailError</span>
+                            }
+                        </label>
+                        <label class="field">
+                            <span>Дополнительная информация</span>
+                            <textarea @bind="guestAdditionalInfo" rows="3" placeholder="Пара слов о будущем звонке (необязательно)"></textarea>
+                        </label>
+                        <button class="cta" disabled="@submitting" @onclick="SubmitAsync">
+                            @if (submitting)
+                            {
+                                <span>Записываю…</span>
+                            }
+                            else
+                            {
+                                <span>Записаться</span>
+                            }
+                        </button>
+                    </div>
+                    break;
+
+                case BookingStep.Done:
+                    <div class="confirm-card">
+                        <h2>Запись подтверждена ✅</h2>
+                        <p class="confirm-main">@created!.EventTypeName · @selectedDayText, @selectedSlotText — @endTime</p>
+                        <p class="confirm-note">@created.Name (@created.Email)</p>
+                        @if (!string.IsNullOrWhiteSpace(created.AdditionalInfo))
+                        {
+                            <p class="confirm-note">«@created.AdditionalInfo»</p>
+                        }
+                        <button class="cta secondary" @onclick="Restart">Записаться ещё раз</button>
+                    </div>
+                    break;
+            }
+        }
     </div>
 </div>
+
+@code {
+    private enum BookingStep
+    {
+        Type,
+        Date,
+        Slot,
+        Guest,
+        Done,
+    }
+
+    private const string UnavailableMessage = "Сервис записи временно недоступен. Попробуйте позже.";
+
+    private static readonly string[] weekdayNames = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
+
+    private BookingStep step = BookingStep.Type;
+    private string? apiUnavailable;
+    private List<EventType>? types;
+    private EventType? selectedType;
+    private List<DateTime>? days;
+    private DateTime selectedDay;
+    private List<string>? slots;
+    private bool slotsLoading;
+    private string? selectedSlot;
+    private string? conflictNotice;
+    private string? formError;
+    private string? globalNotice;
+    private string? nameError;
+    private string? emailError;
+    private bool submitting;
+    private string guestName = "";
+    private string guestEmail = "";
+    private string? guestAdditionalInfo;
+    private ClientBooking? created;
+    private string? endTime;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            types = await Api.Api.EventTypes.GetAsync();
+        }
+        catch (Exception)
+        {
+            apiUnavailable = UnavailableMessage;
+        }
+    }
+
+    private static string StepCaption(BookingStep step) => step switch
+    {
+        BookingStep.Type => "1. Выберите тип события",
+        BookingStep.Date => "2. Выберите дату",
+        BookingStep.Slot => "3. Выберите слот",
+        BookingStep.Guest => "4. Данные для записи",
+        _ => "Готово",
+    };
+
+    private static string WeekdayShort(DateTime day) => weekdayNames[((int)day.DayOfWeek + 6) % 7];
+
+    private string selectedDayText => selectedDay.ToString("dd.MM.yyyy");
+
+    private string selectedSlotText => TimePart(selectedSlot);
+
+    /// «2026-10-21T12:00» -> «12:00» (wall-clock строка контракта, T8 Q2).
+    private static string TimePart(string? wallClock) => wallClock switch
+    {
+        { } v when v.Contains('T') => v[(v.IndexOf('T') + 1)..],
+        null => "",
+        _ => wallClock,
+    };
+
+    private void ChooseType(EventType type)
+    {
+        selectedType = type;
+        globalNotice = null;
+        formError = null;
+        // Окно записи: 14 календарных дней, включая сегодня (T3). Границу «сегодня» считаем по MSK,
+        // как и сервер (T8 Q2); если дата «постарела» за время сессии — сервер вернёт пустой список.
+        days = Enumerable.Range(0, 14).Select(i => MskClock.Now().Date.AddDays(i)).ToList();
+        step = BookingStep.Date;
+    }
+
+    /// Wall-clock по Москве — зеркалит серверный MskClock/BookingWindow (T3/T8):
+    /// зона зафиксирована контрактом; Web не ссылается на Api, поэтому helper свой.
+    private static class MskClock
+    {
+        private static readonly TimeZoneInfo Msk = TimeZoneInfo.FindSystemTimeZoneById("Europe/Moscow");
+
+        public static DateTime Now() => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Msk);
+    }
+
+    private async Task ChooseDateAsync(DateTime day)
+    {
+        selectedDay = day;
+        slots = null;
+        conflictNotice = null;
+        slotsLoading = true;
+        step = BookingStep.Slot;
+        await LoadSlotsAsync();
+    }
+
+    private async Task LoadSlotsAsync()
+    {
+        try
+        {
+            var date = new Microsoft.Kiota.Abstractions.Date(selectedDay.Year, selectedDay.Month, selectedDay.Day);
+            slots = await Api.Api.EventTypes[selectedType!.Id!.Value].Availability
+                .GetAsync(c => c.QueryParameters.Date = date);
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 404)
+        {
+            // тип события мог исчезнуть из виду — возвращаем к его выбору с пояснением
+            globalNotice = "Этот тип события больше недоступен — выберите другой.";
+            step = BookingStep.Type;
+            slotsLoading = false;
+            return;
+        }
+        catch (Exception)
+        {
+            apiUnavailable = UnavailableMessage;
+            slots = null;
+            slotsLoading = false;
+            return;
+        }
+
+        slotsLoading = false;
+    }
+
+    private void ChooseSlot(string slot)
+    {
+        selectedSlot = slot;
+        formError = null;
+        nameError = null;
+        emailError = null;
+        step = BookingStep.Guest;
+    }
+
+    private async Task SubmitAsync()
+    {
+        // защита от реэнтеранса: disabled применяется после render-раунда, второй клик может прийти в полёте
+        if (submitting)
+        {
+            return;
+        }
+
+        nameError = string.IsNullOrWhiteSpace(guestName) ? "Имя обязательно." : null;
+        emailError = !IsProbablyEmail(guestEmail) ? "Укажите корректный email." : null;
+        if (nameError is not null || emailError is not null)
+        {
+            return;
+        }
+
+        submitting = true;
+        try
+        {
+            created = await Api.Api.Bookings.PostAsync(new NewBooking
+            {
+                EventTypeId = selectedType!.Id,
+                Start = selectedSlot!,
+                Name = guestName.Trim(),
+                Email = guestEmail.Trim(),
+                AdditionalInfo = string.IsNullOrWhiteSpace(guestAdditionalInfo) ? null : guestAdditionalInfo.Trim(),
+            });
+            endTime = TimePart(created!.End);
+            step = BookingStep.Done;
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 409)
+        {
+            // слот заняли во время оформления (T2) — возвращаем к сетке с обновлением
+            conflictNotice = "Этот слот только что заняли. Выберите другое время.";
+            step = BookingStep.Slot;
+            slotsLoading = true;
+            await LoadSlotsAsync();
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 404)
+        {
+            globalNotice = "Этот тип события больше недоступен — выберите другой.";
+            step = BookingStep.Type;
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 400)
+        {
+            formError = string.IsNullOrWhiteSpace(ex.Detail) ? "Проверьте данные записи." : ex.Detail;
+        }
+        catch (Exception)
+        {
+            formError = UnavailableMessage;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    // Клиентская эвристика; авторитет — сервер (MailAddress + problem+json 400).
+    private static bool IsProbablyEmail(string value) =>
+        !string.IsNullOrWhiteSpace(value) && value.Contains('@') && !value.Contains(' ');
+
+    private void GoBack()
+    {
+        conflictNotice = null;
+        formError = null;
+        globalNotice = null;
+        nameError = null;
+        emailError = null;
+        step = step switch
+        {
+            BookingStep.Date => BookingStep.Type,
+            BookingStep.Slot => BookingStep.Date,
+            BookingStep.Guest => BookingStep.Slot,
+            _ => BookingStep.Type,
+        };
+    }
+
+    private void Restart()
+    {
+        selectedSlot = null;
+        guestName = "";
+        guestEmail = "";
+        guestAdditionalInfo = null;
+        created = null;
+        endTime = null;
+        conflictNotice = null;
+        formError = null;
+        globalNotice = null;
+        nameError = null;
+        emailError = null;
+        step = BookingStep.Type;
+    }
+}
