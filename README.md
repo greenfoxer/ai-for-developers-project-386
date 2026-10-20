@@ -37,8 +37,10 @@ dotnet run --project src/CallCalendar.Web
 По умолчанию оно слушает `http://localhost:5175`. Чтобы поднять его на порту 5173 с доступом извне:
 
 ```bash
-ASPNETCORE_URLS=http://0.0.0.0:5173 dotnet run --project src/CallCalendar.Web --no-launch-profile
+ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://0.0.0.0:5173 dotnet run --project src/CallCalendar.Web --no-launch-profile
 ```
+
+`ASPNETCORE_ENVIRONMENT=Development` здесь обязателен: `--no-launch-profile` отбрасывает переменные из launchSettings, а без Development-окружения приложение не подгружает манифест статических ассетов (`dotnet run` работает не из published-выхода) — страницы открываются, но CSS/JS отдают 500.
 
 Проверки (линтер, сборка, тесты):
 
