@@ -19,6 +19,12 @@ public sealed class EventTypesImplementation(
 
     public async Task<ActionResult<EventType>> CreateAsync(NewEventType body)
     {
+        // См. BookingsImplementation: некорректное/отсутствующее тело — 400 (T8).
+        if (body is null)
+        {
+            return ApiProblem.Create(400, "Validation error", "Тело запроса отсутствует или некорректно.");
+        }
+
         if (string.IsNullOrWhiteSpace(body.Name) || body.DurationMinutes <= 0)
         {
             return ApiProblem.Create(400, "Validation error", "name непустой и durationMinutes > 0 обязательны (T5).");

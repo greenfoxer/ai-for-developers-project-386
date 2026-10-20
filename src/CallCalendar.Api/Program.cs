@@ -40,3 +40,6 @@ app.MapControllers();
 
 // Dev-порт совпадает с @server контракта (http://localhost:5000, E3).
 app.Run("http://localhost:5000");
+
+/// <summary>Точка входа для WebApplicationFactory в тестах HTTP-шов.</summary>
+public partial class Program;
