@@ -41,14 +41,18 @@ public class SmokeTests
     }
 
     [Fact]
-    public async Task EventsStub_RespondsWithHeading()
+    public async Task AdminPanel_DegradesWhenApiUnavailable()
     {
-        await using var factory = new WebApplicationFactory<Program>();
+        // CI без запущенного API: панель деградирует детерминированно (порт 9 пуст),
+        // проверка опирается на статический пререндер InteractiveServer-компонента.
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(b => b.UseSetting("CallCalendarApi:BaseUrl", "http://127.0.0.1:9"));
         using var client = factory.CreateClient();
 
-        var html = await client.GetStringAsync("/admin");
+        var html = System.Net.WebUtility.HtmlDecode(await client.GetStringAsync("/admin"));
 
-        Assert.Contains("Предстоящие события", html);
+        Assert.Contains("Панель владельца", html);
+        Assert.Contains("Сервис записи временно недоступен", html);
     }
 
     [Fact]
