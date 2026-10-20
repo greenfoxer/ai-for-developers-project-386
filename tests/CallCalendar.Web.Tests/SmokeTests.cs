@@ -50,4 +50,20 @@ public class SmokeTests
 
         Assert.Contains("Предстоящие события", html);
     }
+
+    [Fact]
+    public async Task BookingDegrades_WhenApiUnavailable()
+    {
+        // Заведомо недоступный base URL: порт 9 (discard) пуст — соединение отклоняется.
+        // Проверка опирается на статический пререндер InteractiveServer-компонента:
+        // без него в первом HTML не было бы состояния деградации.
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(b => b.UseSetting("CallCalendarApi:BaseUrl", "http://127.0.0.1:9"));
+        using var client = factory.CreateClient();
+
+        var html = System.Net.WebUtility.HtmlDecode(await client.GetStringAsync("/book"));
+
+        Assert.Contains("Запись на звонок", html);
+        Assert.Contains("Сервис записи временно недоступен", html);
+    }
 }
