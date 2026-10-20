@@ -1,0 +1,10 @@
+# build / IDE artefacts
+**/bin/
+**/obj/
+**/node_modules/
+.vs/
+.vscode/
+.idea/
+
+# git — отсекаем полностью, включая локальные .git.old/.git.broken.bak (Windows-мод с зомби-записями)
+.git*
