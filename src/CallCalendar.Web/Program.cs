@@ -1,3 +1,4 @@
+using CallCalendar.Client;
 using CallCalendar.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Клиентский SDK из контракта: generated-код живёт в CallCalendar.Client (решение P2, #17).
+builder.Services.AddCallCalendarApiClient(
+    new Uri(builder.Configuration["CallCalendarApi:BaseUrl"] ?? "http://localhost:5000"));
 
 var app = builder.Build();
 

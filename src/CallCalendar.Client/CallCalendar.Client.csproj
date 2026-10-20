@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Клиентский SDK из контракта (Kiota). Generated/ — машина, снаружи — ручная DI-фабрика (P2). -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Bundle" Version="2.1.2" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>
