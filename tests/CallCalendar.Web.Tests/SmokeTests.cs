@@ -27,6 +27,9 @@ public class SmokeTests
         Assert.Contains("Calendar</h1>", html);
         Assert.Contains("href=\"book\"", html);
         Assert.Contains("href=\"admin\"", html);
+        // Карточка честная: шаг сетки = длительность типа, «фиксированных 30 минут» нет (#26/T4).
+        Assert.Contains("Слоты с шагом по длительности", html);
+        Assert.DoesNotContain("30-минутн", html, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
