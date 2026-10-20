@@ -1,0 +1,12 @@
+# Ручной локальный запуск приложения (совмещённый образ, см. Dockerfile).
+# БД эфемерная: перезапуск (`down`/`up`) сбрасывает состояние к сид-данным.
+services:
+  app:
+    build:
+      context: .
+    image: callcalendar
+    environment:
+      PORT: "8080"
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
