@@ -1,56 +1,198 @@
 @page "/admin"
+@rendermode InteractiveServer
 @inject CallCalendarClient Api
 
-<PageTitle>Предстоящие события</PageTitle>
+<PageTitle>Панель владельца</PageTitle>
 
 <div class="page">
     <div class="container">
-        <h1>Предстоящие события</h1>
-        @if (loadError is not null)
+        <h1>Панель владельца</h1>
+
+        @if (apiUnavailable is not null)
         {
             <div class="stub-card">
-                <p>@loadError</p>
-            </div>
-        }
-        else if (bookings is null)
-        {
-            <div class="stub-card">
-                <p>Загрузка…</p>
-            </div>
-        }
-        else if (bookings.Count == 0)
-        {
-            <div class="stub-card">
-                <p>Записей пока нет.</p>
+                <p>@apiUnavailable</p>
             </div>
         }
         else
         {
-            <ul class="events-list">
-                @foreach (var booking in bookings)
+            <section class="admin-block">
+                <h2>Типы событий</h2>
+                @if (types is null)
                 {
-                    <li>@booking.Start — @booking.End · @booking.EventTypeName · @booking.Name (@booking.Email)</li>
+                    <p class="muted">Загрузка…</p>
                 }
-            </ul>
+                else if (types.Count == 0)
+                {
+                    <p class="muted">Типов пока нет — создайте первый.</p>
+                }
+                else
+                {
+                    <ul class="types-list">
+                        @foreach (var t in types)
+                        {
+                            <li>
+                                <strong>@t.Name</strong> · @t.DurationMinutes мин
+                                @if (!string.IsNullOrWhiteSpace(t.Description))
+                                {
+                                    <span class="muted"> — @t.Description</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+
+                <h3>Добавить тип события</h3>
+                @if (serverError is not null)
+                {
+                    <div class="notice"><p>@serverError</p></div>
+                }
+                @if (createdNote is not null)
+                {
+                    <div class="notice ok"><p>@createdNote</p></div>
+                }
+                <div class="admin-form">
+                    <label class="field">
+                        <span>Название *</span>
+                        <input @bind="formName" placeholder="например, 30-минутный созвон" />
+                        @if (nameError is not null)
+                        {
+                            <span class="field-error">@nameError</span>
+                        }
+                    </label>
+                    <label class="field">
+                        <span>Описание</span>
+                        <input @bind="formDescription" placeholder="необязательно" />
+                    </label>
+                    <label class="field">
+                        <span>Длительность, мин *</span>
+                        <input type="number" @bind="formDuration" min="1" />
+                        @if (durationError is not null)
+                        {
+                            <span class="field-error">@durationError</span>
+                        }
+                    </label>
+                    <button class="cta" disabled="@saving" @onclick="SaveTypeAsync">
+                        @(saving ? "Сохраняю…" : "Сохранить тип")
+                    </button>
+                </div>
+            </section>
+
+            <section class="admin-block">
+                <h2>Предстоящие события</h2>
+                @if (bookings is null)
+                {
+                    <p class="muted">Загрузка…</p>
+                }
+                else if (bookings.Count == 0)
+                {
+                    <div class="stub-card"><p>Записей пока нет.</p></div>
+                }
+                else
+                {
+                    <ul class="events-list">
+                        @foreach (var b in bookings)
+                        {
+                            <li>
+                                <span class="event-when">@b.Start — @b.End</span>
+                                <span class="event-what">@b.EventTypeName</span>
+                                <span class="event-who">@b.Name (@b.Email)</span>
+                                @if (!string.IsNullOrWhiteSpace(b.AdditionalInfo))
+                                {
+                                    <span class="event-note">«@b.AdditionalInfo»</span>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
         }
     </div>
 </div>
 
 @code {
+    private const string UnavailableMessage = "Сервис записи временно недоступен. Попробуйте позже.";
+
+    private string? apiUnavailable;
+    private List<EventType>? types;
     private List<CallCalendar.Client.Models.Booking>? bookings;
-    private string? loadError;
+    private string formName = "";
+    private string? formDescription;
+    private string? nameError;
+    private string? durationError;
+    private string? serverError;
+    private string? createdNote;
+    private bool saving;
+    private int? formDuration;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Реальный вызов через клиентский SDK из контракта: GET /api/bookings (T7/T8).
-            bookings = await Api.Api.Bookings.GetAsync();
+            await ReloadAsync();
         }
         catch (Exception)
         {
-            // CallCalendar.Api может быть не запущен (тесты, дев-стан) — страница деградирует в заглушку.
-            loadError = "Сервис записи временно недоступен. Попробуйте позже.";
+            apiUnavailable = UnavailableMessage;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        types = await Api.Api.EventTypes.GetAsync();
+        bookings = await Api.Api.Bookings.GetAsync();
+    }
+
+    private async Task SaveTypeAsync()
+    {
+        if (saving)
+        {
+            return;
+        }
+
+        nameError = string.IsNullOrWhiteSpace(formName) ? "Название обязательно." : null;
+        durationError = formDuration is not > 0 ? "Длительность должна быть больше нуля." : null;
+        if (nameError is not null || durationError is not null)
+        {
+            return;
+        }
+
+        saving = true;
+        serverError = null;
+        createdNote = null;
+        try
+        {
+            var created = await Api.Api.EventTypes.PostAsync(new NewEventType
+            {
+                Name = formName.Trim(),
+                Description = string.IsNullOrWhiteSpace(formDescription) ? null : formDescription.Trim(),
+                DurationMinutes = formDuration,
+            });
+
+            // Сервер добавляет тип с максимальным id — дописываем в конец, полный перезапрос не нужен.
+            types ??= [];
+            types.Add(created!);
+            createdNote = $"Добавлен тип «{created!.Name}».";
+            formName = "";
+            formDescription = null;
+            formDuration = null;
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 409)
+        {
+            // дубль названия без учёта регистра и пробелов (T5)
+            serverError = "Тип с таким названием уже есть — выберите другое (регистр и пробелы не важны).";
+        }
+        catch (ProblemDetails ex) when (ex.ResponseStatusCode == 400)
+        {
+            serverError = string.IsNullOrWhiteSpace(ex.Detail) ? "Проверьте данные типа." : ex.Detail;
+        }
+        catch (Exception)
+        {
+            serverError = UnavailableMessage;
+        }
+        finally
+        {
+            saving = false;
         }
     }
 }
