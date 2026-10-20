@@ -12,6 +12,12 @@ public sealed class BookingsImplementation(
 {
     public async Task<ActionResult<Booking>> CreateAsync(NewBooking body)
     {
+        // Тело отсутствует/не разобрано (Required.DisallowNull у optional-полей) — 400, а не 500.
+        if (body is null)
+        {
+            return ApiProblem.Create(400, "Validation error", "Тело запроса отсутствует или некорректно.");
+        }
+
         if (string.IsNullOrWhiteSpace(body.Name) || string.IsNullOrWhiteSpace(body.Email) || !IsEmail(body.Email))
         {
             return ApiProblem.Create(400, "Validation error", "name и email (валидный) обязательны (T6).");
