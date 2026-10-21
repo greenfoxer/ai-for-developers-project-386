@@ -1,7 +1,14 @@
 using CallCalendar.Client;
 using CallCalendar.Web.Components;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options => {
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -12,6 +19,8 @@ builder.Services.AddCallCalendarApiClient(
     new Uri(builder.Configuration["CallCalendarApi:BaseUrl"] ?? "http://localhost:5000"));
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
