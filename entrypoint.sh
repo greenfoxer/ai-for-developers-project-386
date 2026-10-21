@@ -6,12 +6,15 @@ set -eu
 mkdir -p /app/data
 rm -f /app/data/callcalendar.db /app/data/callcalendar.db-shm /app/data/callcalendar.db-wal 2>/dev/null || true
 
-# API слушает localhost:5000 внутри контейнера — как @server в контракте.
+# ВАЖНО: content root берётся из рабочей директории процесса, поэтому каждый
+# процесс стартует из своего каталога (иначе статика Web отдаётся пустой).
+cd /app/api
 ConnectionStrings__sqlite="Data Source=/app/data/callcalendar.db" \
-  dotnet /app/api/CallCalendar.Api.dll &
+  dotnet CallCalendar.Api.dll &
 api_pid=$!
 trap 'kill "$api_pid" 2>/dev/null || true' TERM INT
 
-# Web наружу: Render передаёт PORT, локально дефолт 8080.
+# Web наружу: хост (Railway и т.п.) передаёт PORT, локально дефолт 8080.
+cd /app/web
 ASPNETCORE_URLS="http://0.0.0.0:${PORT:-8080}" \
-  exec dotnet /app/web/CallCalendar.Web.dll
+  exec dotnet CallCalendar.Web.dll
