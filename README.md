@@ -62,3 +62,29 @@ dotnet test CallCalendar.sln -c Release
 ## О Хекслете
 
 [Хекслет](https://ru.hexlet.io/) — школа программирования: авторские программы обучения с практикой, поддержкой наставников и реальными проектами, которые остаются в резюме. Этот репозиторий — один из таких проектов.
+
+## Docker (локальный запуск)
+
+Единый образ собирает `CallCalendar.Api` и `CallCalendar.Web` в одном контейнере. БД SQLite эфемерная — при каждом старте контейнера она пересоздаётся с сид-данными (без томов).
+
+Сборка и запуск через `docker compose`:
+
+```bash
+docker compose up --build
+```
+
+По умолчанию доступно на `http://localhost:8080` (можно переопределить `APP_PORT`). Для проверки: `/`, `/book` (визард), `/admin` (панель владельца). Перезапуск контейнера/`docker compose restart` даёт чистую БД.
+
+Сборка и запуск напрямую:
+
+```bash
+docker build -t callcalendar:latest .
+PORT=8080 docker run --rm -p 8080:8080 -e PORT=8080 callcalendar:latest
+```
+
+## Деплой
+
+**Railway** (https://railway.app): используется `railway.json` (Dockerfile-сборка). После мержа в `main` — New Project → Deploy from GitHub repo, Railway сам соберёт и задеплоит с автогенерацией `PORT`.
+
+Публичный экземпляр: **https://ai-for-developers-project-386-production-af88.up.railway.app**
+
