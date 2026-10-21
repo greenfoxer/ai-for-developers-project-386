@@ -1,8 +1,6 @@
 using CallCalendar.Client;
 using CallCalendar.Web.Components;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,20 +36,7 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 
 app.UseAntiforgery();
 
-var staticFileOptions = new StaticFileOptions
-{
-    ContentTypeProvider = new FileExtensionContentTypeProvider
-    {
-        Mappings =
-        {
-            [".js"] = "application/javascript",
-            [".mjs"] = "application/javascript",
-            [".map"] = "application/json"
-        }
-    }
-};
-app.UseStaticFiles(staticFileOptions);
-// app.MapStaticAssets(); // behind proxy can cause integrity/MIME issues; fallback to UseStaticFiles
+app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
