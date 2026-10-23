@@ -86,5 +86,7 @@ PORT=8080 docker run --rm -p 8080:8080 -e PORT=8080 callcalendar:latest
 
 **Railway** (https://railway.app): используется `railway.json` (Dockerfile-сборка). После мержа в `main` — New Project → Deploy from GitHub repo, Railway сам соберёт и задеплоит с автогенерацией `PORT`.
 
+Про Render: MCP-сервер хостинга был подключён, но его инструмент создания сервисов не поддерживает Docker (`create_web_service` работает только с не-Docker сервисами), а Blueprint у Render требует платного плана. Поэтому деплой выполнен на Railway тем же Docker-образом: Railway собирает его по `railway.json`/`Dockerfile`, приложение слушает выданный платформой `PORT` (`entrypoint.sh`: `ASPNETCORE_URLS=http://0.0.0.0:${PORT:-8080}`).
+
 Публичный экземпляр: **https://ai-for-developers-project-386-production-af88.up.railway.app**
 
