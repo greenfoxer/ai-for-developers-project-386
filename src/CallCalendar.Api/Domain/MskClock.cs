@@ -27,18 +27,23 @@ public static class MskClock
         DateTime.TryParseExact(value, WallFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out mskWall);
 }
 
-/// Рабочие границы дня и окно записи (T3): 09:00–18:00 MSK, 14 календарных дней включая сегодня,
-/// выходные не исключаются.
+/// Рабочие границы дня (T3): 09:00–18:00 MSK, выходные не исключаются.
+/// Окно записи — 14 календарных дней, начиная с сегодняшнего (T3); шаг сетки стартов фиксированный.
 public static class BookingWindow
 {
     public const int WorkStartHour = 9;
     public const int WorkEndHour = 18;
-    public const int Days = 14;
+
+    /// Шаг сетки стартов — фиксированные 30 минут, не зависит от длительности типа (T4).
+    public const int SlotStepMinutes = 30;
+
+    /// Длина окна записи в календарных днях, включая сегодняшний (T3).
+    public const int WindowDays = 14;
 
     public static DateTime DayStart(this DateTime date) => date.Date.AddHours(WorkStartHour);
 
     public static DateTime DayEnd(this DateTime date) => date.Date.AddHours(WorkEndHour);
 
-    public static bool IsWithinWindow(this DateTime mskWall) =>
-        mskWall.Date >= MskClock.NowWall().Date && mskWall.Date < MskClock.NowWall().Date.AddDays(Days);
+    /// Последний день окна (включительно): сегодня + (WindowDays - 1).
+    public static DateTime LastWindowDay(this DateTime today) => today.Date.AddDays(WindowDays - 1);
 }

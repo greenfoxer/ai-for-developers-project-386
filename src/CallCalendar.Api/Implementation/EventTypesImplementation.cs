@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CallCalendar.Api.Implementation;
 
 /// Реализация сгенерированного IEventTypesController (NSwag partial-контроллер делегирует сюда).
-/// Бизнес-правила: T3 (окно/часы), T4 (сетка слотов), T2 (пересечение), T5 ( поля/дубли).
+/// Бизнес-правила: T3 (рабочие часы), T4 (сетка слотов), T2 (пересечение), T5 (поля/дубли).
 public sealed class EventTypesImplementation(
     IEventTypeStore eventTypes,
     IBookingStore bookings) : IEventTypesController
@@ -57,13 +57,19 @@ public sealed class EventTypesImplementation(
         var day = date.Date; // календарный день запроса (wall-clock MSK, T8 Q2)
         var now = MskClock.NowWall();
 
-        // Сетка стартов: якорь 09:00, шаг = durationMinutes; слот предлагается,
-        // если start+D <= 18:00, start > now и дата в окне 14 дней (T3/T4).
+        // Окно записи — 14 календарных дней с сегодняшнего; вне окна слотов нет (T3).
+        if (day < now.Date || day > now.LastWindowDay())
+        {
+            return new OkObjectResult(Array.Empty<string>());
+        }
+
+        // Сетка стартов: якорь 09:00, фиксированный шаг 30 минут; слот предлагается,
+        // если start+D <= 18:00 и start > now (T3/T4).
         var existing = await bookings.ListAllWithTypesAsync(CancellationToken.None);
         var starts = new List<string>();
-        for (var start = day.DayStart(); start.AddMinutes(type.DurationMinutes) <= day.DayEnd(); start = start.AddMinutes(type.DurationMinutes))
+        for (var start = day.DayStart(); start.AddMinutes(type.DurationMinutes) <= day.DayEnd(); start = start.AddMinutes(BookingWindow.SlotStepMinutes))
         {
-            if (start <= now || !start.IsWithinWindow())
+            if (start <= now)
             {
                 continue;
             }
