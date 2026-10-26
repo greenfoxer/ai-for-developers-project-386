@@ -28,19 +28,37 @@ dotnet restore CallCalendar.sln
 
 ## Использование
 
-Запуск приложения:
+Приложение состоит из двух процессов: API (`src/CallCalendar.Api`) и веб-интерфейс (`src/CallCalendar.Web`). Сначала поднимите API, затем Web.
+
+### Запуск API
+
+```bash
+dotnet run --project src/CallCalendar.Api
+```
+
+API слушает `http://localhost:5000` (порт совпадает с `@server` TypeSpec-контракта). Данные хранятся в SQLite (`src/CallCalendar.Api/callcalendar.db`); при первом старте создаются два демо-типа событий.
+
+### Запуск Web
 
 ```bash
 dotnet run --project src/CallCalendar.Web
 ```
 
-По умолчанию оно слушает `http://localhost:5175`. Чтобы поднять его на порту 5173 с доступом извне:
+По умолчанию Web слушает `http://localhost:5175` и обращается к API по адресу `http://localhost:5000` (переопределяется через `CallCalendarApi:BaseUrl`). Чтобы поднять Web на порту 5173 с доступом извне:
 
 ```bash
 ASPNETCORE_ENVIRONMENT=Development ASPNETCORE_URLS=http://0.0.0.0:5173 dotnet run --project src/CallCalendar.Web --no-launch-profile
 ```
 
 `ASPNETCORE_ENVIRONMENT=Development` здесь обязателен: `--no-launch-profile` отбрасывает переменные из launchSettings, а без Development-окружения приложение не подгружает манифест статических ассетов (`dotnet run` работает не из published-выхода) — страницы открываются, но CSS/JS отдают 500.
+
+### Генерация контракта
+
+Контракт описан в TypeSpec (`contracts/`), из него генерируются OpenAPI-спецификация, клиентский SDK (Kiota) и серверные контроллеры (NSwag). Одна команда пересобирает всю цепочку и прогоняет проверки:
+
+```bash
+./scripts/generate.sh
+```
 
 Проверки (линтер, сборка, тесты):
 
@@ -81,6 +99,13 @@ docker compose up --build
 docker build -t callcalendar:latest .
 PORT=8080 docker run --rm -p 8080:8080 -e PORT=8080 callcalendar:latest
 ```
+
+## MCP-серверы
+
+В ходе разработки MCP-серверы в боевом сценарии не использовались, поэтому конфигурации MCP в репозитории нет. Что пробовали и почему отказались:
+
+- **Render (хостинг)** — MCP-сервер подключён, но его инструмент `create_web_service` не поддерживает Docker, а Blueprint требует платного плана. Деплой в итоге выполнен на Railway тем же Docker-образом (см. «Деплой»).
+- **GitHub и прочие MCP-серверы** — не использовались из-за ограничений хостовой среды; операции с issues ведутся через `gh` CLI.
 
 ## Деплой
 
