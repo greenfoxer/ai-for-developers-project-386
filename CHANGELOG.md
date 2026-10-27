@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/greenfoxer/ai-for-developers-project-386/compare/v1.0.0...v1.1.0) (2026-10-26)
+
+
+### Features
+
+* three-column booking wizard and month-view calendar ([#46](https://github.com/greenfoxer/ai-for-developers-project-386/issues/46)) ([ba87eb0](https://github.com/greenfoxer/ai-for-developers-project-386/commit/ba87eb075ae004a7b917e4a718afc6e459252f91))
+
 ## 1.0.0 (2026-10-23)
 
 
